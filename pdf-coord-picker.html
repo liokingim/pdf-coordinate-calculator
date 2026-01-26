@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PDF 좌표 계산기</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+
+        .wrap {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            height: 100vh;
+        }
+
+        .left {
+            background: #111;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 10px;
+            background: #1b1b1b;
+            color: #ddd;
+            flex-wrap: wrap;
+        }
+
+        .toolbar input[type="number"] {
+            width: 90px;
+        }
+
+        .toolbar button {
+            cursor: pointer;
+        }
+
+        .viewer {
+            position: relative;
+            overflow: auto;
+            flex: 1;
+        }
+
+        #pdfCanvas {
+            display: block;
+            margin: 0 auto;
+            background: #222;
+        }
+
+        #overlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+        }
+
+        .dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffea00;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, .4);
+        }
+
+        .right {
+            border-left: 1px solid #e5e5e5;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            flex: 1;
+            resize: none;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .row button {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .kbd {
+            padding: 2px 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fafafa;
+            font-family: ui-monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="left">
+            <div class="toolbar">
+                <label>PDF 선택: <input id="fileInput" type="file" accept="application/pdf"></label>
+                <button id="prevBtn">이전</button>
+                <button id="nextBtn">다음</button>
+                <span>페이지: <b id="pageInfo">-</b></span>
+
+                <span style="margin-left:12px;"></span>
+
+                <label>Zoom:
+                    <input id="zoomInput" type="number" value="1.5" step="0.1" min="0.3" max="5">
+                </label>
+
+                <label>기본 fontSize:
+                    <input id="fontSizeInput" type="number" value="12" step="1" min="1" max="200">
+                </label>
+
+                <label>좌표계:
+                    <select id="coordMode">
+                        <option value="pdf">PDF좌표(좌하단 원점)</option>
+                        <option value="canvas">Canvas좌표(좌상단 원점)</option>
+                    </select>
+                </label>
+
+                <button id="clearDotsBtn">점 지우기</button>
+            </div>
+
+            <div class="viewer" id="viewer">
+                <canvas id="pdfCanvas"></canvas>
+                <div id="overlay"></div>
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="hint">
+                - PDF 위를 클릭하면 좌표가 textarea에 추가돼요.<br />
+                - textarea는 마음대로 수정 가능 (즉시 반영).<br />
+                - <span class="kbd">저장</span>: localStorage에 저장 (새로고침해도 유지)<br />
+                - <span class="kbd">복사</span>: 클립보드로 복사 → 메모장에 붙여넣기<br />
+                - 표준 PDF 좌표는 “좌하단이 (0,0)” 입니다.
+            </div>
+
+            <textarea id="log" spellcheck="false" placeholder='예:
+{"page":1,"x":100.5,"y":720.2,"fontSize":12,"text":"..."}'></textarea>
+
+            <div class="row">
+                <button id="saveBtn">저장</button>
+                <button id="loadBtn">불러오기</button>
+            </div>
+            <div class="row">
+                <button id="copyBtn">복사</button>
+                <button id="clearBtn">초기화</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF.js -->
+    <script src="js/pdf.min.js"></script>
+    <script>
+        // pdf.js worker 설정
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "js/pdf.worker.min.js";
+
+        const fileInput = document.getElementById("fileInput");
+        const canvas = document.getElementById("pdfCanvas");
+        const overlay = document.getElementById("overlay");
+        const viewer = document.getElementById("viewer");
+
+        const prevBtn = document.getElementById("prevBtn");
+        const nextBtn = document.getElementById("nextBtn");
+        const pageInfo = document.getElementById("pageInfo");
+
+        const zoomInput = document.getElementById("zoomInput");
+        const fontSizeInput = document.getElementById("fontSizeInput");
+        const coordMode = document.getElementById("coordMode");
+
+        const log = document.getElementById("log");
+        const saveBtn = document.getElementById("saveBtn");
+        const loadBtn = document.getElementById("loadBtn");
+        const copyBtn = document.getElementById("copyBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const clearDotsBtn = document.getElementById("clearDotsBtn");
+
+        const LS_KEY = "pdf_coord_picker_log_v1";
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageCount = 0;
+        let currentViewport = null;
+
+        function setPageInfo() {
+            pageInfo.textContent = pdfDoc ? `${pageNum} / ${pageCount}` : "-";
+        }
+
+        function clearDots() {
+            overlay.innerHTML = "";
+        }
+
+        function addDot(xCanvas, yCanvas) {
+            const dot = document.createElement("div");
+            dot.className = "dot";
+            dot.style.left = `${xCanvas}px`;
+            dot.style.top = `${yCanvas}px`;
+            overlay.appendChild(dot);
+        }
+
+        async function renderPage() {
+            if (!pdfDoc) return;
+            const page = await pdfDoc.getPage(pageNum);
+
+            const scale = Number(zoomInput.value || 1.5);
+            const viewport = page.getViewport({ scale });
+            currentViewport = viewport;
+
+            const ctx = canvas.getContext("2d", { alpha: false });
+
+            canvas.width = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+
+            // overlay를 canvas와 같은 크기/위치로
+            overlay.style.width = canvas.width + "px";
+            overlay.style.height = canvas.height + "px";
+
+            // viewer에서 canvas가 중앙정렬이라 overlay도 같이 중앙에 위치하도록
+            // -> canvas의 offset을 기준으로 overlay 위치를 맞춤
+            // render 후 layout 반영된 다음 맞추기 위해 requestAnimationFrame 사용
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            requestAnimationFrame(() => {
+                const rect = canvas.getBoundingClientRect();
+                const vRect = viewer.getBoundingClientRect();
+                const left = rect.left - vRect.left + viewer.scrollLeft;
+                const top = rect.top - vRect.top + viewer.scrollTop;
+                overlay.style.transform = `translate(${left}px, ${top}px)`;
+            });
+
+            setPageInfo();
+            clearDots(); // 페이지 변경 시 점 초기화(원하면 유지하도록 바꿔도 됨)
+        }
+
+        async function loadPdfFromFile(file) {
+            const buf = await file.arrayBuffer();
+            pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+            pageCount = pdfDoc.numPages;
+            pageNum = 1;
+            setPageInfo();
+            await renderPage();
+        }
+
+        function getCanvasPointFromClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            return { x, y };
+        }
+
+        function canvasToPdfCoords(xCanvas, yCanvas) {
+            // canvas 좌표: (0,0)=좌상단
+            // pdf 좌표: (0,0)=좌하단
+            const xPdf = xCanvas;
+            const yPdf = currentViewport.height - yCanvas;
+            return { x: xPdf, y: yPdf };
+        }
+
+        function formatEntry({ page, x, y, fontSize }) {
+            // 줄 단위 JSON. 메모장에 붙여넣기 깔끔
+            const obj = {
+                page,
+                x: Number(x.toFixed(2)),
+                y: Number(y.toFixed(2)),
+                fontSize: Number(fontSize)
+            };
+            return JSON.stringify(obj);
+        }
+
+        function appendLogLine(line) {
+            const t = log.value.trimEnd();
+            log.value = (t ? t + "\n" : "") + line + "\n";
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 이벤트들
+        fileInput.addEventListener("change", async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            await loadPdfFromFile(file);
+        });
+
+        prevBtn.addEventListener("click", async () => {
+            if (!pdfDoc) return;
+            if (pageNum <= 1) return;
+            pageNum--;
+            await renderPage();
+        });
+
+        nextBtn.addEventListener("click", async () => {
+            if (!pdfDoc) return;
+            if (pageNum >= pageCount) return;
+            pageNum++;
+            await renderPage();
+        });
+
+        zoomInput.addEventListener("change", renderPage);
+
+        // 캔버스 클릭 -> 좌표 추가
+        canvas.addEventListener("click", (e) => {
+            if (!pdfDoc || !currentViewport) return;
+
+            const { x: xCanvas, y: yCanvas } = getCanvasPointFromClick(e);
+            addDot(xCanvas, yCanvas);
+
+            const fontSize = Number(fontSizeInput.value || 12);
+
+            if (coordMode.value === "canvas") {
+                const line = formatEntry({ page: pageNum, x: xCanvas, y: yCanvas, fontSize });
+                appendLogLine(line);
+            } else {
+                const { x, y } = canvasToPdfCoords(xCanvas, yCanvas);
+                const line = formatEntry({ page: pageNum, x, y, fontSize });
+                appendLogLine(line);
+            }
+        });
+
+        clearDotsBtn.addEventListener("click", clearDots);
+
+        // 저장/불러오기/복사/초기화
+        saveBtn.addEventListener("click", () => {
+            localStorage.setItem(LS_KEY, log.value);
+            alert("저장 완료 (브라우저 메모리에 저장됨)");
+        });
+
+        loadBtn.addEventListener("click", () => {
+            const v = localStorage.getItem(LS_KEY);
+            if (v != null) log.value = v;
+            else alert("저장된 내용이 없어요.");
+        });
+
+        copyBtn.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(log.value);
+                alert("클립보드에 복사 완료! 메모장에 붙여넣기 하세요.");
+            } catch (err) {
+                // iOS/권한 이슈 대비: 선택 후 수동 복사 안내
+                log.focus();
+                log.select();
+                alert("자동 복사가 안 될 수 있어요. 선택된 텍스트를 수동으로 복사해주세요.");
+            }
+        });
+
+        clearBtn.addEventListener("click", () => {
+            if (!confirm("textarea와 저장된 내용(localStorage)을 모두 초기화할까요?")) return;
+            log.value = "";
+            localStorage.removeItem(LS_KEY);
+            clearDots();
+        });
+
+        // 시작 시 자동 불러오기
+        (() => {
+            const v = localStorage.getItem(LS_KEY);
+            if (v) log.value = v;
+        })();
+
+        // 스크롤/리사이즈 시 overlay 위치 동기화
+        viewer.addEventListener("scroll", () => {
+            if (!canvas || !overlay) return;
+            const rect = canvas.getBoundingClientRect();
+            const vRect = viewer.getBoundingClientRect();
+            const left = rect.left - vRect.left + viewer.scrollLeft;
+            const top = rect.top - vRect.top + viewer.scrollTop;
+            overlay.style.transform = `translate(${left}px, ${top}px)`;
+        });
+        window.addEventListener("resize", () => {
+            if (pdfDoc) renderPage();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>検査フォーム</title>
+    <link rel="stylesheet" href="style1.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="fixed-header">
+
+            <!-- 상단: 날짜/요일(좌), 시공장소(우) -->
+            <div class="header">
+                월검사입력
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px;">
+                <div style="font-size: 1.1em; text-align: left;">
+                    2025년 12월 05일 (금)<span class="dropdown-arrow">▼</span>
+                </div>
+                <div style="width: 40%;"></div>
+            </div>
+
+            <!-- 2열: 왼쪽은 빈 칸, 오른쪽 칸에 시공장소(왼쪽 정렬)와 번호(오른쪽 정렬) 배치 -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 8px;">
+                <div></div>
+                <div style="display: flex; flex-direction: column;">
+                    <div style="text-align: left;">
+                        시공장소: 小羊生電車基地<span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div style="text-align: right; margin-top: 4px;">
+                        번호: 001-A1F 全<span class="dropdown-arrow">▼</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-container">
+                <button class="tab-button active-tab">001-A1</button>
+                <button class="tab-button">001-A2</button>
+                <button class="tab-button">001-A3</button>
+                <button class="tab-button">001-A4</button>
+                <button class="tab-button">001-A5</button>
+                <button class="tab-button">001-A6</button>
+                <button class="tab-button">001-A7</button>
+                <button class="tab-button">001-A8</button>
+            </div>
+
+            <div class="tab-container">
+                <button class="tab-button">主回路・制御回路</button>
+                <button class="tab-button">ブレーキ装置</button>
+                <button class="tab-button">一般電気装置</button>
+                <button class="tab-button">一般電気装置</button>
+                <button class="tab-button">車体装備</button>
+                <button class="tab-button">その他の装置</button>
+                <button class="tab-button">車体装備</button>
+                <button class="tab-button">その他の装置</button>
+                <button class="tab-button">過負荷試験</button>
+                <button class="tab-button">調整</button>
+                <button class="tab-button">測定品</button>
+                <button class="tab-button">記入事</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="main-title">試 験 及 び 検 査 項 目</div>
+
+            <div class="item-row">
+                <span class="section-title">主行装置</span>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">台車枠. 描かれそう</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="testRunningDeviceCartFrame" checked> -</label>
+                    <label><input type="radio" name="testRunningDeviceCartFrame"> ①</label>
+                    <label><input type="radio" name="testRunningDeviceCartFrame"> ○</label>
+                    <label><input type="radio" name="testRunningDeviceCartFrame"> ×</label>
+                    <label><input type="radio" name="testRunningDeviceCartFrame"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">動輪, 軸箱支持装置</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">車輪. 車軸</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">ばね装置固定装置</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">接地装置</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="save-button">保存</button>
+            </div>
+
+            <div class="item-row">
+                <span class="section-title">主回路・制御回路</span>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">パンクラフ</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">主電動機</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">断流器. 遮断器</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">主制御器</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">主幹制御器. 制動指令器</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">主抵抗器</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">接触器. 電磁器</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="item2" checked> -</label>
+                    <label><input type="radio" name="item2"> ①</label>
+                    <label><input type="radio" name="item2"> ○</label>
+                    <label><input type="radio" name="item2"> ×</label>
+                    <label><input type="radio" name="item2"> チ</label>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="save-button">保存</button>
+            </div>
+
+            <!-- Lower part: from first image -->
+
+            <div class="header">
+                CM由 99.9 リハビ
+            </div>
+
+            <div class="section-title">記 車</div>
+
+            <div style="display: flex;">
+                <div style="flex: 1;">
+                    <div class="blue-box">冷房操作時外気用フルター清掃</div>
+                    <div class="blue-box">速度発電機定則点検</div>
+                    <div class="blue-box">注入器外部点検</div>
+                    <div class="blue-box">方向転換器およびインジケータ取付部</div>
+                    <div class="blue-box">下車主油</div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="blue-box">時廃部整値</div>
+                    <div class="blue-box">全方位地帯飛行手入力</div>
+                    <div class="blue-box">M3D元元SWk決定</div>
+                </div>
+            </div>
+
+            <div class="section-title">自由入力</div>
+
+            <div class="gray-box">
+                冷房操作時外気用フルター清掃<br>
+                冷房操作時外気用フルター清掃<br>
+                冷房操作時外気用フルター清掃<br>
+                冷房操作時外気用フルター清掃<br>
+                冷房操作時外気用フルター清掃<br>
+                冷房操作時外気用フルター清掃
+            </div>
+
+            <div class="section-title">変更履歴 車 由</div>
+
+            <button class="save-button">保存</button>
+
+            <div class="item-row">
+                <span class="item-label">村定 規定</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="history1"> ○</label>
+                    <label><input type="radio" name="history1" checked> -</label>
+                    <label><input type="radio" name="history1"> ○</label>
+                    <label><input type="radio" name="history1"> ●</label>
+                    <label><input type="radio" name="history1"> ○</label>
+                    <label><input type="radio" name="history1"> ○</label>
+                    <label><input type="radio" name="history1"> ×</label>
+                    <label><input type="radio" name="history1"> ○</label>
+                    <label><input type="radio" name="history1"> チ</label>
+                </div>
+            </div>
+
+            <div class="item-row">
+                <span class="item-label">刺激</span>
+                <div class="radio-group">
+                    <label><input type="radio" name="history2"> ○</label>
+                    <label><input type="radio" name="history2" checked> -</label>
+                    <label><input type="radio" name="history2"> ○</label>
+                    <label><input type="radio" name="history2"> ●</label>
+                    <label><input type="radio" name="history2"> ○</label>
+                    <label><input type="radio" name="history2"> ○</label>
+                    <label><input type="radio" name="history2"> ×</label>
+                    <label><input type="radio" name="history2"> ○</label>
+                    <label><input type="radio" name="history2"> チ</label>
+                </div>
+            </div>
+
+            <!-- Add similar for other history rows -->
+
+            <button class="save-button">保存</button>
+        </div>
+
+    </div>
+
+
+</body>
+
+</html>

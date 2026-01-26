@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 좌표 계산기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #ecf0f1;
+            border-bottom: 1px solid #bdc3c7;
+        }
+
+        .file-input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .settings {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .settings label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .settings input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+        }
+
+        .main-content {
+            display: flex;
+            height: calc(100vh - 280px);
+        }
+
+        .pdf-viewer {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            background: #95a5a6;
+            position: relative;
+        }
+
+        #pdf-canvas {
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: crosshair;
+            background: white;
+        }
+
+        .coordinates-panel {
+            width: 400px;
+            padding: 20px;
+            border-left: 1px solid #bdc3c7;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #fafafa;
+        }
+
+        .coordinates-panel h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: none;
+            line-height: 1.6;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #229954;
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #c0392b;
+        }
+
+        .btn-copy {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #2980b9;
+        }
+
+        .info {
+            background: #d5e8f7;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+
+        .marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: red;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .page-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .page-navigation button {
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .page-navigation button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .page-navigation span {
+            font-size: 14px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 PDF 좌표 계산기</h1>
+            <p>PDF 파일을 업로드하고 클릭하여 좌표를 추출하세요</p>
+        </div>
+
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <input type="file" id="pdf-file" accept=".pdf">
+            </div>
+            
+            <div class="settings">
+                <label>
+                    <input type="checkbox" id="show-markers" checked>
+                    마커 표시
+                </label>
+                <label>
+                    기본 폰트크기:
+                    <input type="number" id="default-fontsize" value="12" min="1" max="100">
+                </label>
+                <div class="page-navigation" id="page-nav" style="display: none;">
+                    <button id="prev-page">이전</button>
+                    <span id="page-info">페이지 1 / 1</span>
+                    <button id="next-page">다음</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="pdf-viewer" id="pdf-container">
+                <canvas id="pdf-canvas"></canvas>
+            </div>
+
+            <div class="coordinates-panel">
+                <h3>좌표 데이터</h3>
+                <div class="info">
+                    💡 PDF를 클릭하면 좌표가 추가됩니다<br>
+                    • x, y: 클릭 위치 좌표<br>
+                    • fontsize: 폰트 크기 (수정 가능)
+                </div>
+                <textarea id="coordinates-textarea" placeholder="좌표 데이터가 여기에 표시됩니다..."></textarea>
+                <div class="button-group">
+                    <button class="btn-copy" onclick="copyToClipboard()">📋 복사</button>
+                    <button class="btn-clear" onclick="clearCoordinates()">🗑️ 지우기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let canvas = document.getElementById('pdf-canvas');
+        let ctx = canvas.getContext('2d');
+        let coordinates = [];
+        let markers = [];
+
+        // PDF 렌더링
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(function(page) {
+                let viewport = page.getViewport({scale: scale});
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                let renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+
+                let renderTask = page.render(renderContext);
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                    updatePageInfo();
+                    redrawMarkers();
+                });
+            });
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function onPrevPage() {
+            if (pageNum <= 1) {
+                return;
+            }
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+
+        function onNextPage() {
+            if (pageNum >= pdfDoc.numPages) {
+                return;
+            }
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+
+        function updatePageInfo() {
+            document.getElementById('page-info').textContent = `페이지 ${pageNum} / ${pdfDoc.numPages}`;
+            document.getElementById('prev-page').disabled = pageNum <= 1;
+            document.getElementById('next-page').disabled = pageNum >= pdfDoc.numPages;
+        }
+
+        // PDF 파일 로드
+        document.getElementById('pdf-file').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (file.type !== 'application/pdf') {
+                showNotification('PDF 파일을 선택해주세요', 'error');
+                return;
+            }
+
+            let fileReader = new FileReader();
+            fileReader.onload = function() {
+                let typedarray = new Uint8Array(this.result);
+
+                pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                    pdfDoc = pdf;
+                    pageNum = 1;
+                    renderPage(pageNum);
+                    
+                    if (pdf.numPages > 1) {
+                        document.getElementById('page-nav').style.display = 'flex';
+                    }
+                    
+                    showNotification('PDF 파일이 로드되었습니다');
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
+
+        // 페이지 네비게이션
+        document.getElementById('prev-page').addEventListener('click', onPrevPage);
+        document.getElementById('next-page').addEventListener('click', onNextPage);
+
+        // 캔버스 클릭 이벤트
+        canvas.addEventListener('click', function(e) {
+            if (!pdfDoc) {
+                showNotification('먼저 PDF 파일을 업로드해주세요', 'error');
+                return;
+            }
+
+            let rect = canvas.getBoundingClientRect();
+            let x = Math.round((e.clientX - rect.left) * (canvas.width / rect.width));
+            let y = Math.round((e.clientY - rect.top) * (canvas.height / rect.height));
+            let fontSize = parseInt(document.getElementById('default-fontsize').value);
+
+            // 좌표 추가
+            addCoordinate(x, y, fontSize, pageNum);
+
+            // 마커 표시
+            if (document.getElementById('show-markers').checked) {
+                addMarker(e.clientX - rect.left, e.clientY - rect.top);
+            }
+        });
+
+        function addCoordinate(x, y, fontSize, page) {
+            let coord = {x: x, y: y, fontsize: fontSize, page: page};
+            coordinates.push(coord);
+            updateTextarea();
+        }
+
+        function updateTextarea() {
+            let textarea = document.getElementById('coordinates-textarea');
+            let text = coordinates.map((c, i) => 
+                `[${i + 1}] x: ${c.x}, y: ${c.y}, fontsize: ${c.fontsize}, page: ${c.page}`
+            ).join('\n');
+            textarea.value = text;
+        }
+
+        function addMarker(x, y) {
+            let container = document.getElementById('pdf-container');
+            let marker = document.createElement('div');
+            marker.className = 'marker';
+            marker.style.left = (canvas.offsetLeft + x) + 'px';
+            marker.style.top = (canvas.offsetTop + y) + 'px';
+            container.appendChild(marker);
+            markers.push(marker);
+        }
+
+        function redrawMarkers() {
+            markers.forEach(marker => marker.remove());
+            markers = [];
+            
+            if (document.getElementById('show-markers').checked) {
+                let rect = canvas.getBoundingClientRect();
+                coordinates.filter(c => c.page === pageNum).forEach(coord => {
+                    let x = coord.x * (rect.width / canvas.width);
+                    let y = coord.y * (rect.height / canvas.height);
+                    addMarker(x, y);
+                });
+            }
+        }
+
+        // Textarea 수동 편집 감지
+        document.getElementById('coordinates-textarea').addEventListener('input', function(e) {
+            let lines = e.target.value.split('\n');
+            coordinates = [];
+            
+            lines.forEach(line => {
+                let match = line.match(/x:\s*(\d+),\s*y:\s*(\d+),\s*fontsize:\s*(\d+),\s*page:\s*(\d+)/);
+                if (match) {
+                    coordinates.push({
+                        x: parseInt(match[1]),
+                        y: parseInt(match[2]),
+                        fontsize: parseInt(match[3]),
+                        page: parseInt(match[4])
+                    });
+                }
+            });
+            
+            redrawMarkers();
+        });
+
+        // 복사 기능
+        function copyToClipboard() {
+            let textarea = document.getElementById('coordinates-textarea');
+            if (textarea.value.trim() === '') {
+                showNotification('복사할 데이터가 없습니다', 'error');
+                return;
+            }
+            
+            textarea.select();
+            document.execCommand('copy');
+            showNotification('클립보드에 복사되었습니다! 메모장에 붙여넣기 하세요');
+        }
+
+        // 지우기 기능
+        function clearCoordinates() {
+            if (coordinates.length === 0) {
+                showNotification('지울 데이터가 없습니다', 'error');
+                return;
+            }
+            
+            if (confirm('모든 좌표 데이터를 삭제하시겠습니까?')) {
+                coordinates = [];
+                markers.forEach(marker => marker.remove());
+                markers = [];
+                document.getElementById('coordinates-textarea').value = '';
+                showNotification('데이터가 삭제되었습니다');
+            }
+        }
+
+        // 알림 표시
+        function showNotification(message, type = 'success') {
+            let notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? '#e74c3c' : '#27ae60';
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 마커 표시 토글
+        document.getElementById('show-markers').addEventListener('change', function() {
+            redrawMarkers();
+        });
+    </script>
+</body>
+</html>

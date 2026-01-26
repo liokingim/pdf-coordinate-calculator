@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月検査入力</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "MS Gothic", "Meiryo", sans-serif;
+            background-color: #c0c0c0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #666;
+        }
+
+        .header {
+            background: #5a8aa5;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .date-section {
+            padding: 15px;
+            background: #e8e8e8;
+            border-bottom: 1px solid #999;
+        }
+
+        .date-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .date-row input,
+        .date-row select {
+            padding: 5px;
+            border: 1px solid #666;
+        }
+
+        .tabs {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 2px solid #666;
+        }
+
+        .tab-row {
+            display: flex;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            border: 1px solid #666;
+            border-bottom: none;
+            cursor: pointer;
+            font-size: 11px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .tab-row:first-child .tab {
+            border-bottom: 1px solid #666;
+        }
+
+        .tab-row:nth-child(2) .tab {
+            border-bottom: 1px solid #666;
+        }
+
+        .tab.active {
+            background: #d4814e;
+            color: white;
+            font-weight: bold;
+        }
+
+        .tab:not(.active) {
+            background: #b8cdd9;
+        }
+
+        .section-header {
+            background: #6b9056;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .inspection-section {
+            margin: 20px;
+        }
+
+        .subsection-title {
+            background: #b8cdd9;
+            padding: 8px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .inspection-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .inspection-table td {
+            padding: 8px;
+            border: 1px solid #999;
+        }
+
+        .inspection-table td:first-child {
+            background: #f0f0f0;
+            width: 200px;
+        }
+
+        .check-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .radio-btn {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .x-mark {
+            color: #d45d5d;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .notes-section {
+            margin: 20px;
+            padding: 15px;
+            background: #e8e8e8;
+        }
+
+        .notes-title {
+            background: #b8cdd9;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .free-input-area {
+            background: white;
+            border: 1px solid #999;
+            padding: 10px;
+            min-height: 150px;
+        }
+
+        .reason-section {
+            margin-top: 20px;
+        }
+
+        .reason-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #999;
+        }
+
+        .reason-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reason-item input[type="radio"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-btn {
+            background: #2c7a8f;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            margin: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            background: #1f5d6f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">月検査入力</div>
+
+        <div class="date-section">
+            <div class="date-row">
+                <span>2025 年 12 ▼ 月 05 ▼ 日（金）</span>
+                <input type="text" style="width: 100px;">
+                <span>施工箇所: 小宅指車西至地 ▼</span>
+                <span style="margin-left: auto;">編成番号: 001-A1F</span>
+                <select>
+                    <option>全体 ▼</option>
+                </select>
+                <button class="action-btn">読込</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-row">
+                <div class="tab active" data-category="001-A1">001-A1</div>
+                <div class="tab" data-category="001-A2">001-A2</div>
+                <div class="tab" data-category="001-A3">001-A3</div>
+                <div class="tab" data-category="001-A4">001-A4</div>
+                <div class="tab" data-category="001-A5">001-A5</div>
+                <div class="tab" data-category="001-A6">001-A6</div>
+                <div class="tab" data-category="001-A7">001-A7</div>
+                <div class="tab" data-category="001-A8">001-A8</div>
+            </div>
+            <div class="tab-row">
+                <div class="tab active" data-content="running">走行装置</div>
+                <div class="tab" data-content="control">主回路·制御回路</div>
+                <div class="tab" data-content="brake">ブレーキ装置</div>
+                <div class="tab" data-content="electric">一般電気装置</div>
+                <div class="tab" data-content="air">一般空気装置</div>
+                <div class="tab" data-content="body">車体·車室</div>
+                <div class="tab" data-content="other">その他の装置</div>
+                <div class="tab" data-content="test">総合試験</div>
+            </div>
+            <div class="tab-row">
+                <div class="tab" data-other="other1">その他</div>
+                <div class="tab" data-other="resistance">総合採抗</div>
+                <div class="tab" data-other="adjust">調整</div>
+                <div class="tab" data-other="oil">油脂品</div>
+                <div class="tab" data-other="notes">記事</div>
+            </div>
+        </div>
+
+        <div class="section-header">試　験　及　び　検　査　項　目</div>
+
+        <div class="inspection-section">
+            <div class="subsection-title" id="section-running">走行装置</div>
+            <table class="inspection-table" data-section="running">
+                <tr>
+                    <td>台車枠、揺れまくら</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item1" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item1" class="radio-btn">
+                            <input type="radio" name="item1" class="radio-btn">
+                            <input type="radio" name="item1" class="radio-btn">
+                            <input type="radio" name="item1" class="radio-btn">
+                            <input type="radio" name="item1" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item1" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>軸箱、軸箱支持装置</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item2" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item2" class="radio-btn">
+                            <input type="radio" name="item2" class="radio-btn">
+                            <input type="radio" name="item2" class="radio-btn">
+                            <input type="radio" name="item2" class="radio-btn">
+                            <input type="radio" name="item2" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item2" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>車輪、車軸</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item3" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item3" class="radio-btn">
+                            <input type="radio" name="item3" class="radio-btn">
+                            <input type="radio" name="item3" class="radio-btn">
+                            <input type="radio" name="item3" class="radio-btn">
+                            <input type="radio" name="item3" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item3" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>ばね等緩衝装置</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item4" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item4" class="radio-btn">
+                            <input type="radio" name="item4" class="radio-btn">
+                            <input type="radio" name="item4" class="radio-btn">
+                            <input type="radio" name="item4" class="radio-btn">
+                            <input type="radio" name="item4" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item4" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>排障器</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item5" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item5" class="radio-btn">
+                            <input type="radio" name="item5" class="radio-btn">
+                            <input type="radio" name="item5" class="radio-btn">
+                            <input type="radio" name="item5" class="radio-btn">
+                            <input type="radio" name="item5" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item5" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>接地装置</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item6" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item6" class="radio-btn">
+                            <input type="radio" name="item6" class="radio-btn">
+                            <input type="radio" name="item6" class="radio-btn">
+                            <input type="radio" name="item6" class="radio-btn">
+                            <input type="radio" name="item6" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item6" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <button class="action-btn" style="float: right; margin-top: 10px;">保存</button>
+            <div style="clear: both;"></div>
+
+            <div class="subsection-title" id="section-control">主回路·制御回路</div>
+            <table class="inspection-table" data-section="control" style="display: none;">
+                <tr>
+                    <td>パンタグラフ</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item7" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item7" class="radio-btn">
+                            <input type="radio" name="item7" class="radio-btn">
+                            <input type="radio" name="item7" class="radio-btn">
+                            <input type="radio" name="item7" class="radio-btn">
+                            <input type="radio" name="item7" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item7" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>主電動機</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item8" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item8" class="radio-btn">
+                            <input type="radio" name="item8" class="radio-btn">
+                            <input type="radio" name="item8" class="radio-btn">
+                            <input type="radio" name="item8" class="radio-btn">
+                            <input type="radio" name="item8" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item8" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>断流器、遮断器</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item9" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item9" class="radio-btn">
+                            <input type="radio" name="item9" class="radio-btn">
+                            <input type="radio" name="item9" class="radio-btn">
+                            <input type="radio" name="item9" class="radio-btn">
+                            <input type="radio" name="item9" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item9" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>主制御器</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item10" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item10" class="radio-btn">
+                            <input type="radio" name="item10" class="radio-btn">
+                            <input type="radio" name="item10" class="radio-btn">
+                            <input type="radio" name="item10" class="radio-btn">
+                            <input type="radio" name="item10" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item10" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>主幹制御器、制御指令器</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item11" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item11" class="radio-btn">
+                            <input type="radio" name="item11" class="radio-btn">
+                            <input type="radio" name="item11" class="radio-btn">
+                            <input type="radio" name="item11" class="radio-btn">
+                            <input type="radio" name="item11" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item11" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>主抵抗器</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item12" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item12" class="radio-btn">
+                            <input type="radio" name="item12" class="radio-btn">
+                            <input type="radio" name="item12" class="radio-btn">
+                            <input type="radio" name="item12" class="radio-btn">
+                            <input type="radio" name="item12" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item12" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>接触器、継電器</td>
+                    <td>
+                        <div class="check-row">
+                            <input type="radio" name="item13" class="radio-btn" checked>
+                            <span>ー</span>
+                            <input type="radio" name="item13" class="radio-btn">
+                            <input type="radio" name="item13" class="radio-btn">
+                            <input type="radio" name="item13" class="radio-btn">
+                            <input type="radio" name="item13" class="radio-btn">
+                            <input type="radio" name="item13" class="radio-btn">
+                            <span class="x-mark">×</span>
+                            <input type="radio" name="item13" class="radio-btn">
+                            <span>手</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 記事セクション -->
+        <div class="notes-section">
+            <div class="notes-title">記 事</div>
+
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter1">
+                    <label for="filter1">冷房機新鮮外気用フィルター清掃</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter2">
+                    <label for="filter2">暖房器整備</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter3">
+                    <label for="filter3">速度発電機定期点検</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter4">
+                    <label for="filter4">全位接地刷子手入れ</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter5">
+                    <label for="filter5">消火器外観点検</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter6">
+                    <label for="filter6">M3D気圧SW水抜き</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter7">
+                    <label for="filter7">汚物濾過器およびインペラ定期取替</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="filter8">
+                    <label for="filter8">戸車注油</label>
+                </div>
+            </div>
+
+            <div style="background: #b8cdd9; padding: 8px; margin-top: 15px;">自由入力</div>
+            <div class="free-input-area">
+                <div>冷房機新鮮外気用フィルター清掃</div>
+                <div>冷房機新鮮外気用フィルター清掃</div>
+                <div>冷房機新鮮外気用フィルター清掃</div>
+                <div>冷房機新鮮外気用フィルター清掃</div>
+                <div>冷房機新鮮外気用フィルター清掃</div>
+                <div>冷房機新鮮外気用フィルター清掃</div>
+                <div>冷房機新鮮外気用フィルター清掃</div>
+                <div>冷房機新鮮外気用フィルター清掃</div>
+            </div>
+
+            <button class="action-btn" style="float: right; margin-top: 10px;">保存</button>
+            <div style="clear: both;"></div>
+        </div>
+
+        <!-- 要記訓記事 事由 -->
+        <div class="notes-section reason-section">
+            <div class="notes-title">要記訓記事 事由</div>
+
+            <div class="reason-grid">
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r1" checked>
+                    <label for="r1">検査·測定</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r2">
+                    <label for="r2">定期</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r3">
+                    <label for="r3">フラット</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r4">
+                    <label for="r4">割離</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r5">
+                    <label for="r5">グルーピング</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r6">
+                    <label for="r6">自券台回送</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r7">
+                    <label for="r7">フランジ角度変更</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r8">
+                    <label for="r8">直立修斜</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r9">
+                    <label for="r9">径合わせ</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r10">
+                    <label for="r10">新造</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r11">
+                    <label for="r11">フラット大</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r12">
+                    <label for="r12">剥離大</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r13">
+                    <label for="r13">凹摩</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r14">
+                    <label for="r14">輸軸交換</label>
+                </div>
+                <div class="reason-item">
+                    <input type="radio" name="reason" id="r15">
+                    <label for="r15">その他</label>
+                </div>
+            </div>
+
+            <button class="action-btn" style="float: right; margin-top: 10px;">保存</button>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 2단 탭: 검사 항목 섹션 전환
+        const contentTabs = document.querySelectorAll('[data-content]');
+        contentTabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                // 2단 탭 활성화 상태 변경
+                contentTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // 해당 섹션 표시
+                const section = this.dataset.content;
+                document.querySelectorAll('.inspection-table').forEach(table => {
+                    table.style.display = 'none';
+                });
+                document.querySelectorAll('.subsection-title').forEach(title => {
+                    title.style.display = 'none';
+                });
+
+                const targetTitle = document.getElementById('section-' + section);
+                const targetTable = document.querySelector('[data-section="' + section + '"]');
+                if (targetTitle) targetTitle.style.display = 'block';
+                if (targetTable) targetTable.style.display = 'table';
+            });
+        });
+
+        // 1단 탭: 편성 번호
+        const categoryTabs = document.querySelectorAll('[data-category]');
+        categoryTabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                categoryTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                // 편성 번호에 따른 데이터 로드
+            });
+        });
+
+        // 3단 탭: 기타 기능
+        const otherTabs = document.querySelectorAll('[data-other]');
+        otherTabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                otherTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                // 기타 기능 처리
+            });
+        });
+    </script>
+</body>
+
+</html>

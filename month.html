@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>月検査入力</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Yu Gothic", "Segoe UI", sans-serif;
+            background: #f2f2f2;
+        }
+
+        .page {
+            width: 1200px;
+            margin: 16px auto 32px;
+            background: #ffffff;
+            border: 1px solid #999;
+            padding: 16px 20px 32px;
+        }
+
+        /* 상단 공통 */
+        h1.page-title {
+            text-align: center;
+            margin: 0 0 12px;
+            font-size: 22px;
+            letter-spacing: 0.15em;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+            align-items: center;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .toolbar label {
+            white-space: nowrap;
+        }
+
+        .toolbar input[type="text"],
+        .toolbar select {
+            padding: 2px 4px;
+            font-size: 13px;
+        }
+
+        .btn {
+            padding: 4px 18px;
+            font-size: 13px;
+            border: 1px solid #555;
+            background: #007c8c;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        /* 탭 */
+        .tab-row {
+            display: flex;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .tab-row button {
+            flex: 1;
+            padding: 4px 0;
+            border: 1px solid #999;
+            border-right: none;
+            background: #dfe8ea;
+            cursor: pointer;
+        }
+
+        .tab-row button:last-child {
+            border-right: 1px solid #999;
+        }
+
+        .tab-row button.active {
+            background: #f5933a;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .subtab-row {
+            display: flex;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+
+        .subtab-row button {
+            flex: 1;
+            padding: 3px 0;
+            border: 1px solid #999;
+            border-right: none;
+            background: #e7f0f0;
+            cursor: pointer;
+        }
+
+        .subtab-row button:last-child {
+            border-right: 1px solid #999;
+        }
+
+        .subtab-row button.active {
+            background: #ffb34b;
+            font-weight: bold;
+        }
+
+        /* 검사표 */
+        .inspection-section {
+            margin-top: 16px;
+            border: 1px solid #777;
+        }
+
+        .inspection-header {
+            background: #4f8b1c;
+            color: #fff;
+            text-align: center;
+            padding: 4px 0;
+            font-size: 14px;
+            letter-spacing: 0.2em;
+        }
+
+        .inspection-block {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            border-top: 1px solid #ccc;
+        }
+
+        .inspection-block:first-of-type {
+            border-top: none;
+        }
+
+        .inspection-block-title {
+            background: #e1edf4;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .inspection-table-wrapper {
+            padding: 6px 8px 10px;
+            position: relative;
+        }
+
+        table.inspection-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table.inspection-table th,
+        table.inspection-table td {
+            border: 1px solid #ccc;
+            padding: 3px 4px;
+            text-align: center;
+        }
+
+        table.inspection-table th:first-child,
+        table.inspection-table td:first-child {
+            text-align: left;
+            padding-left: 6px;
+            white-space: nowrap;
+        }
+
+        .inspection-table input[type="radio"] {
+            margin: 0;
+        }
+
+        .inspection-save {
+            position: absolute;
+            right: 8px;
+            bottom: 2px;
+        }
+
+        /* 하단 기사/자유입력/이유 */
+        .section-title-bar {
+            margin-top: 24px;
+            margin-bottom: 4px;
+            background: #e1edf4;
+            border: 1px solid #999;
+            padding: 4px 10px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .article-panel {
+            border: 1px solid #999;
+            padding: 8px 10px 10px;
+            font-size: 13px;
+        }
+
+        .article-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(280px, 1fr));
+            row-gap: 4px;
+            column-gap: 40px;
+            margin-bottom: 8px;
+        }
+
+        .article-checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .panel-footer {
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .free-input-panel {
+            border: 1px solid #999;
+            border-top: none;
+            padding: 8px 10px 10px;
+            font-size: 13px;
+        }
+
+        .free-input-panel textarea {
+            width: 100%;
+            height: 140px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .reason-panel {
+            border: 1px solid #999;
+            padding: 8px 10px 10px;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .reason-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            row-gap: 6px;
+            column-gap: 40px;
+        }
+
+        .reason-grid label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .circle-radio {
+            width: 14px;
+            height: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- 1번 이미지 영역 : 상부 월검사 화면 -->
+        <h1 class="page-title">月検査入力</h1>
+
+        <div class="toolbar">
+            <label>2025 年
+                <input type="text" size="2" value="12"> 月
+                <input type="text" size="2" value="05"> 日（金）
+            </label>
+
+            <label>施工箇所：
+                <select>
+                    <option>八王寺車両基地</option>
+                </select>
+            </label>
+
+            <label>編成番号：
+                <input type="text" size="6" value="001-A1F">
+            </label>
+
+            <label>
+                <select>
+                    <option>全体</option>
+                </select>
+            </label>
+
+            <button class="btn">読込</button>
+        </div>
+
+        <div class="tab-row">
+            <button class="active">001-A1</button>
+            <button>001-A2</button>
+            <button>001-A3</button>
+            <button>001-A4</button>
+            <button>001-A5</button>
+            <button>001-A6</button>
+            <button>001-A7</button>
+            <button>001-A8</button>
+        </div>
+
+        <div class="subtab-row">
+            <button class="active">主回路・制御回路</button>
+            <button>ブレーキ装置</button>
+            <button>一般電機部品</button>
+            <button>台車装置</button>
+            <button>車体装置</button>
+            <button>その他の装置</button>
+            <button>総合試験</button>
+            <button>その他</button>
+            <button>給排抵抗</button>
+            <button>潤滑品</button>
+            <button>記事</button>
+        </div>
+
+        <section class="inspection-section">
+            <div class="inspection-header">試　験　及　び　検　査　項　目</div>
+
+            <!-- 走行装置 -->
+            <div class="inspection-block">
+                <div class="inspection-block-title">走行装置</div>
+                <div class="inspection-table-wrapper">
+                    <table class="inspection-table">
+                        <thead>
+                            <tr>
+                                <th>項目</th>
+                                <th>◎</th>
+                                <th>〇</th>
+                                <th>△</th>
+                                <th>×</th>
+                                <th>－</th>
+                                <th>手</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>台車枠、揺れまくら</td>
+                                <td><input type="radio" name="r1"></td>
+                                <td><input type="radio" name="r1"></td>
+                                <td><input type="radio" name="r1"></td>
+                                <td><input type="radio" name="r1"></td>
+                                <td><input type="radio" name="r1"></td>
+                                <td><input type="radio" name="r1"></td>
+                            </tr>
+                            <tr>
+                                <td>軸箱、軸箱支持装置</td>
+                                <td><input type="radio" name="r2"></td>
+                                <td><input type="radio" name="r2"></td>
+                                <td><input type="radio" name="r2"></td>
+                                <td><input type="radio" name="r2"></td>
+                                <td><input type="radio" name="r2"></td>
+                                <td><input type="radio" name="r2"></td>
+                            </tr>
+                            <tr>
+                                <td>車輪、車軸</td>
+                                <td><input type="radio" name="r3"></td>
+                                <td><input type="radio" name="r3"></td>
+                                <td><input type="radio" name="r3"></td>
+                                <td><input type="radio" name="r3"></td>
+                                <td><input type="radio" name="r3"></td>
+                                <td><input type="radio" name="r3"></td>
+                            </tr>
+                            <tr>
+                                <td>ばね等緩衝装置</td>
+                                <td><input type="radio" name="r4"></td>
+                                <td><input type="radio" name="r4"></td>
+                                <td><input type="radio" name="r4"></td>
+                                <td><input type="radio" name="r4"></td>
+                                <td><input type="radio" name="r4"></td>
+                                <td><input type="radio" name="r4"></td>
+                            </tr>
+                            <tr>
+                                <td>掛搖器</td>
+                                <td><input type="radio" name="r5"></td>
+                                <td><input type="radio" name="r5"></td>
+                                <td><input type="radio" name="r5"></td>
+                                <td><input type="radio" name="r5"></td>
+                                <td><input type="radio" name="r5"></td>
+                                <td><input type="radio" name="r5"></td>
+                            </tr>
+                            <tr>
+                                <td>接地装置</td>
+                                <td><input type="radio" name="r6"></td>
+                                <td><input type="radio" name="r6"></td>
+                                <td><input type="radio" name="r6"></td>
+                                <td><input type="radio" name="r6"></td>
+                                <td><input type="radio" name="r6"></td>
+                                <td><input type="radio" name="r6"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="inspection-save">
+                        <button class="btn">保存</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主回路・制御回路 -->
+            <div class="inspection-block">
+                <div class="inspection-block-title">主回路・制御回路</div>
+                <div class="inspection-table-wrapper">
+                    <table class="inspection-table">
+                        <thead>
+                            <tr>
+                                <th>項目</th>
+                                <th>◎</th>
+                                <th>〇</th>
+                                <th>△</th>
+                                <th>×</th>
+                                <th>－</th>
+                                <th>手</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>パンタグラフ</td>
+                                <td><input type="radio" name="m1"></td>
+                                <td><input type="radio" name="m1"></td>
+                                <td><input type="radio" name="m1"></td>
+                                <td><input type="radio" name="m1"></td>
+                                <td><input type="radio" name="m1"></td>
+                                <td><input type="radio" name="m1"></td>
+                            </tr>
+                            <tr>
+                                <td>主電動機</td>
+                                <td><input type="radio" name="m2"></td>
+                                <td><input type="radio" name="m2"></td>
+                                <td><input type="radio" name="m2"></td>
+                                <td><input type="radio" name="m2"></td>
+                                <td><input type="radio" name="m2"></td>
+                                <td><input type="radio" name="m2"></td>
+                            </tr>
+                            <tr>
+                                <td>断流器、遮断器</td>
+                                <td><input type="radio" name="m3"></td>
+                                <td><input type="radio" name="m3"></td>
+                                <td><input type="radio" name="m3"></td>
+                                <td><input type="radio" name="m3"></td>
+                                <td><input type="radio" name="m3"></td>
+                                <td><input type="radio" name="m3"></td>
+                            </tr>
+                            <tr>
+                                <td>主制御器</td>
+                                <td><input type="radio" name="m4"></td>
+                                <td><input type="radio" name="m4"></td>
+                                <td><input type="radio" name="m4"></td>
+                                <td><input type="radio" name="m4"></td>
+                                <td><input type="radio" name="m4"></td>
+                                <td><input type="radio" name="m4"></td>
+                            </tr>
+                            <tr>
+                                <td>主幹制御器、制御指令器</td>
+                                <td><input type="radio" name="m5"></td>
+                                <td><input type="radio" name="m5"></td>
+                                <td><input type="radio" name="m5"></td>
+                                <td><input type="radio" name="m5"></td>
+                                <td><input type="radio" name="m5"></td>
+                                <td><input type="radio" name="m5"></td>
+                            </tr>
+                            <tr>
+                                <td>主抵抗器</td>
+                                <td><input type="radio" name="m6"></td>
+                                <td><input type="radio" name="m6"></td>
+                                <td><input type="radio" name="m6"></td>
+                                <td><input type="radio" name="m6"></td>
+                                <td><input type="radio" name="m6"></td>
+                                <td><input type="radio" name="m6"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="inspection-save">
+                        <button class="btn">保存</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2번 이미지 영역 : 하부 기사/자유입력/이유 -->
+        <div class="section-title-bar">記事</div>
+        <div class="article-panel">
+            <div class="article-checkbox-grid">
+                <label><input type="checkbox"> 冷房機新鮮外気用フィルター清掃</label>
+                <label><input type="checkbox"> 暖房機整備</label>
+
+                <label><input type="checkbox"> 速度発電機定期点検</label>
+                <label><input type="checkbox"> 主回路機器手入れ</label>
+
+                <label><input type="checkbox"> 消火設備外観点検</label>
+                <label><input type="checkbox"> M3D方式SW内点検</label>
+
+                <label><input type="checkbox"> 汚物処理装置およびベンチレータ定期改善</label>
+                <label><input type="checkbox"> 戸閉油</label>
+            </div>
+            <div class="panel-footer">
+                <button class="btn">保存</button>
+            </div>
+        </div>
+
+        <div class="section-title-bar">自由入力</div>
+        <div class="free-input-panel">
+            <textarea>
+冷房機新鮮外気用フィルター清掃
+冷房機新鮮外気用フィルター清掃
+冷房機新鮮外気用フィルター清掃
+冷房機新鮮外気用フィルター清掃
+冷房機新鮮外気用フィルター清掃
+    </textarea>
+            <div class="panel-footer">
+                <button class="btn">保存</button>
+            </div>
+        </div>
+
+        <div class="section-title-bar">要表記記事 事由</div>
+        <div class="reason-panel">
+            <div class="reason-grid">
+                <label><input type="radio" name="reason" class="circle-radio"> 検査測定</label>
+                <label><input type="radio" name="reason" class="circle-radio"> 定期</label>
+                <label><input type="radio" name="reason" class="circle-radio"> フラット</label>
+
+                <label><input type="radio" name="reason" class="circle-radio"> 剥離</label>
+                <label><input type="radio" name="reason" class="circle-radio"> グルーピング</label>
+                <label><input type="radio" name="reason" class="circle-radio"> 白糸合回送</label>
+
+                <label><input type="radio" name="reason" class="circle-radio"> フランジ角度変更</label>
+                <label><input type="radio" name="reason" class="circle-radio"> 直立摩耗</label>
+                <label><input type="radio" name="reason" class="circle-radio"> 径合わせ</label>
+
+                <label><input type="radio" name="reason" class="circle-radio"> 新造</label>
+                <label><input type="radio" name="reason" class="circle-radio"> フラット大</label>
+                <label><input type="radio" name="reason" class="circle-radio"> 剥離大</label>
+
+                <label><input type="radio" name="reason" class="circle-radio"> 凹摩耗</label>
+                <label><input type="radio" name="reason" class="circle-radio"> 輪軸交換</label>
+                <label><input type="radio" name="reason" class="circle-radio"> その他</label>
+            </div>
+            <div class="panel-footer">
+                <button class="btn">保存</button>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>
