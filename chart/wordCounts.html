@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>3D Pie - Word Frequency</title>
+  <style>
+    html, body { margin:0; height:100%; background:#fff; font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif; }
+    #wrap { display:grid; grid-template-columns: 360px 1fr; height:100%; }
+    #panel { padding:14px; border-right:1px solid #eee; overflow:auto; }
+    #canvas { width:100%; height:100%; display:block; }
+    textarea { width:100%; height:220px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; }
+    .row { display:flex; gap:8px; align-items:center; margin:10px 0; }
+    label { font-size:13px; color:#444; }
+    input[type="number"] { width:90px; }
+    button { padding:8px 10px; cursor:pointer; }
+    .legend { margin-top:12px; font-size:13px; }
+    .item { display:flex; align-items:center; gap:8px; margin:6px 0; }
+    .swatch { width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.15); }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="panel">
+      <h3 style="margin:0 0 8px;">입체 파이 (서버 정렬 데이터)</h3>
+
+      <label>서버 JSON 붙여넣기</label>
+      <textarea id="jsonInput">
+{
+  "month": "2026-01",
+  "metric": "failureCauseWords",
+  "wordCounts": [
+    { "word": "고장", "count": 132 },
+    { "word": "불량", "count": 74 },
+    { "word": "브레이크", "count": 68 },
+    { "word": "문", "count": 61 },
+    { "word": "개폐", "count": 49 },
+    { "word": "충돌", "count": 45 },
+    { "word": "스프링", "count": 38 },
+    { "word": "접촉", "count": 34 },
+    { "word": "장애", "count": 31 },
+    { "word": "마모", "count": 29 },
+    { "word": "배선", "count": 26 },
+    { "word": "단선", "count": 24 },
+    { "word": "오작동", "count": 23 },
+    { "word": "전원", "count": 22 },
+    { "word": "공급", "count": 21 }
+  ]
+}
+      </textarea>
+
+      <div class="row">
+        <label>Top N</label>
+        <input id="topN" type="number" min="10" max="50" value="10" />
+        <label>두께</label>
+        <input id="depth" type="number" min="4" max="80" value="22" />
+      </div>
+
+      <div class="row">
+        <label>반지름</label>
+        <input id="radius" type="number" min="60" max="260" value="160" />
+        <label>분리(강조)</label>
+        <input id="explode" type="number" min="0" max="30" value="10" />
+      </div>
+
+      <div class="row">
+        <label>Other 묶기</label>
+        <input id="useOther" type="checkbox" checked />
+        <button id="renderBtn">렌더링</button>
+      </div>
+
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+    import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+
+    // ---- (1) 정렬된 wordCounts -> pie items ----
+    function itemsFromSortedWordCounts(jsonText, { topN = 10, useOther = true } = {}) {
+      const obj = JSON.parse(jsonText);
+      const list = Array.isArray(obj.wordCounts) ? obj.wordCounts : [];
+
+      const head = list.slice(0, topN)
+        .map(x => ({ label: String(x.word ?? ""), value: Number(x.count ?? 0) }))
+        .filter(x => x.label && Number.isFinite(x.value) && x.value > 0);
+
+      if (useOther && list.length > topN) {
+        const otherSum = list.slice(topN).reduce((acc, x) => acc + (Number(x.count) || 0), 0);
+        if (otherSum > 0) head.push({ label: "Other", value: otherSum });
+      }
+
+      const total = head.reduce((a, b) => a + b.value, 0);
+      return head.map(x => ({ ...x, ratio: x.value / total }));
+    }
+
+    // ---- (2) 3D slice ----
+    function makePieSlice({ startAngle, endAngle, radius, depth }) {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.absarc(0, 0, radius, startAngle, endAngle, false);
+      shape.lineTo(0, 0);
+
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth,
+        bevelEnabled: true,
+        bevelThickness: Math.max(1, depth * 0.08),
+        bevelSize: Math.max(1, radius * 0.02),
+        bevelSegments: 2,
+        curveSegments: 64
+      });
+      geo.translate(0, 0, -depth / 2);
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    function palette(i) {
+      const colors = [
+        0x1f5a89, 0x3b74c5, 0xee7f2d, 0xbfbfbf, 0xf2c200,
+        0x2aa84a, 0x7d3fb2, 0xb34b1e, 0x2c2c2c, 0x00a2b8,
+        0x5a7d2a, 0xd14f8a, 0x6b6b6b, 0x0f8a9d
+      ];
+      return colors[i % colors.length];
+    }
+
+    // ---- Three.js scene ----
+    const canvas = document.getElementById("canvas");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+    renderer.shadowMap.enabled = true;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 3000);
+    camera.position.set(260, 220, 260);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xaaaaaa, 0.8));
+
+    const key = new THREE.DirectionalLight(0xffffff, 1.0);
+    key.position.set(200, 300, 200);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+    fill.position.set(-220, 120, -180);
+    scene.add(fill);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(1200, 1200),
+      new THREE.ShadowMaterial({ opacity: 0.18 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -70;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    let pieGroup = new THREE.Group();
+    scene.add(pieGroup);
+
+    function clearPie() {
+      scene.remove(pieGroup);
+      pieGroup.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) obj.material.dispose();
+      });
+      pieGroup = new THREE.Group();
+      scene.add(pieGroup);
+    }
+
+    function renderLegend(items) {
+      const legend = document.getElementById("legend");
+      legend.innerHTML =
+        `<div style="font-weight:600; margin:10px 0 6px;">범례 (${items.length}개)</div>` +
+        items.map((it, idx) => {
+          const pct = (it.ratio * 100).toFixed(1);
+          const color = `#${palette(idx).toString(16).padStart(6,"0")}`;
+          return `
+            <div class="item">
+              <div class="swatch" style="background:${color}"></div>
+              <div>${escapeHtml(it.label)} : ${it.value} (${pct}%)</div>
+            </div>
+          `;
+        }).join("");
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+    }
+
+    function buildPie(items, { radius, depth, explode }) {
+      clearPie();
+
+      // 이미지처럼 약간 눕힌 각도
+      pieGroup.rotation.x = -0.45;
+      pieGroup.rotation.z = 0.05;
+      pieGroup.position.y = -10;
+
+      let angle = 0;
+      const gap = 0.005;
+
+      items.forEach((it, i) => {
+        const sliceAngle = it.ratio * Math.PI * 2;
+        const start = angle + gap;
+        const end = angle + sliceAngle - gap;
+
+        const geo = makePieSlice({ startAngle: start, endAngle: end, radius, depth });
+        const mat = new THREE.MeshStandardMaterial({
+          color: palette(i),
+          roughness: 0.35,
+          metalness: 0.08
+        });
+
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+
+        // 첫 조각은 더 크게 분리해서 강조 (원하면 규칙 변경)
+        const mid = (start + end) / 2;
+        const push = (i === 0 ? explode : explode * 0.35);
+        mesh.position.x = Math.cos(mid) * push;
+        mesh.position.y = Math.sin(mid) * push;
+
+        pieGroup.add(mesh);
+        angle += sliceAngle;
+      });
+    }
+
+    function resize() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    resize();
+    animate();
+
+    // ---- UI ----
+    const jsonInput = document.getElementById("jsonInput");
+    const topNEl = document.getElementById("topN");
+    const depthEl = document.getElementById("depth");
+    const radiusEl = document.getElementById("radius");
+    const explodeEl = document.getElementById("explode");
+    const useOtherEl = document.getElementById("useOther");
+
+    function doRender() {
+      const topN = Number(topNEl.value);
+      const depth = Number(depthEl.value);
+      const radius = Number(radiusEl.value);
+      const explode = Number(explodeEl.value);
+      const useOther = useOtherEl.checked;
+
+      const items = itemsFromSortedWordCounts(jsonInput.value, { topN, useOther });
+      renderLegend(items);
+      buildPie(items, { radius, depth, explode });
+    }
+
+    document.getElementById("renderBtn").addEventListener("click", doRender);
+    doRender();
+  </script>
+</body>
+</html>
