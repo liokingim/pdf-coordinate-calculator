@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>차량 절연측정기록표 (태블릿 입력)</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --panel: #14161d;
+      --panel2:#1b1e27;
+      --line: #2b3040;
+      --text: #e9ecf1;
+      --muted:#a7afbf;
+      --good:#3ddc97;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --btn:#2a2f3d;
+      --btn2:#3a4156;
+      --focus:#7aa2ff;
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+      background: radial-gradient(1200px 800px at 30% -10%, #17203a 0%, var(--bg) 55%);
+      color: var(--text);
+    }
+    .app{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    .sticky-header{
+      position:sticky;
+      top:0;
+      z-index:10;
+      background: rgba(20,22,29,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 160px;
+    }
+    label{
+      font-size:12px;
+      color: var(--muted);
+    }
+    input, select, button{
+      font: inherit;
+    }
+    input[type="date"], input[type="text"], input[type="number"]{
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      outline: none;
+    }
+    input:focus{
+      border-color: var(--focus);
+      box-shadow: 0 0 0 3px rgba(122,162,255,0.15);
+    }
+    .btn{
+      background: linear-gradient(180deg, var(--btn2), var(--btn));
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .badge{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #0f1220;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--muted);
+    }
+    .dot.good{ background: var(--good); }
+    .dot.warn{ background: var(--warn); }
+    .dot.bad{ background: var(--bad); }
+
+    .tabs{
+      margin-top: 10px;
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      padding-bottom: 4px;
+    }
+    .tab{
+      flex: 0 0 auto;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #0f1220;
+      cursor:pointer;
+      color: var(--text);
+      user-select:none;
+    }
+    .tab small{ color: var(--muted); }
+    .tab.active{
+      border-color: rgba(122,162,255,0.7);
+      box-shadow: 0 0 0 3px rgba(122,162,255,0.12);
+    }
+    .tab .mini{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--bad);
+    }
+    .tab.done .mini{ background: var(--good); }
+    .tab.partial .mini{ background: var(--warn); }
+
+    main{
+      padding: 14px;
+      flex: 1 1 auto;
+      display:flex;
+      gap:14px;
+      flex-direction:column;
+    }
+    .card{
+      background: rgba(20,22,29,0.8);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .card-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    h2,h3{
+      margin:0;
+      font-weight: 650;
+    }
+    h2{ font-size: 16px; }
+    h3{ font-size: 14px; color: var(--muted); font-weight: 600; }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .grid{ grid-template-columns: 1fr; }
+      .field{ min-width: 140px; }
+    }
+
+    .measure{
+      background: rgba(27,30,39,0.85);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .measure-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .measure-meta{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .rows{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .input-row{
+      display:grid;
+      grid-template-columns: 1fr 170px;
+      gap:10px;
+      align-items:center;
+    }
+    .input-row .label{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .input-row .label b{ font-size: 13px; }
+    .input-row .label span{ font-size: 12px; color: var(--muted); }
+    .unit-wrap{
+      position:relative;
+    }
+    .unit{
+      position:absolute;
+      right:10px;
+      top:50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events:none;
+    }
+    .num{
+      width:100%;
+      padding-right: 44px;
+      font-size: 16px;
+      height: 44px;
+      border-radius: 12px;
+    }
+
+    .sticky-footer{
+      position:sticky;
+      bottom:0;
+      z-index:10;
+      background: rgba(20,22,29,0.92);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--line);
+      padding: 12px 14px;
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .footer-left, .footer-right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .toast{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    pre{
+      white-space: pre-wrap;
+      background:#0f1220;
+      border:1px solid var(--line);
+      padding:12px;
+      border-radius: 12px;
+      color: #cfe3ff;
+      overflow:auto;
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- 상단 고정 헤더 -->
+  <header class="sticky-header">
+    <div class="row">
+      <div class="field">
+        <label for="tripDate">출장일</label>
+        <input id="tripDate" type="date" />
+      </div>
+
+      <div class="field">
+        <label for="trainNo">편성번호</label>
+        <input id="trainNo" type="text" placeholder="예: 1234" inputmode="numeric" />
+      </div>
+
+      <button id="btnLoad" class="btn">편성 불러오기</button>
+
+      <span class="badge" id="formationBadge">
+        <span class="dot bad" id="formationDot"></span>
+        <span id="formationText">편성: -</span>
+      </span>
+
+      <span class="badge" id="progressBadge">
+        <span class="dot warn" id="progressDot"></span>
+        <span id="progressText">진행률: 0%</span>
+      </span>
+    </div>
+
+    <div class="tabs" id="carTabs" aria-label="차량 탭"></div>
+  </header>
+
+  <!-- 본문 -->
+  <main>
+    <section class="card" id="carPanel">
+      <div class="card-title">
+        <h2 id="carTitle">편성을 불러오면 차량 입력 화면이 나타납니다.</h2>
+        <div class="measure-meta" id="carMeta"></div>
+      </div>
+      <div id="carBody"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">
+        <h2>제출 데이터(JSON 미리보기)</h2>
+        <div class="measure-meta">임시저장: localStorage / 제출: 아래 JSON 출력</div>
+      </div>
+      <pre id="jsonPreview">{}</pre>
+    </section>
+  </main>
+
+  <!-- 하단 고정 버튼 -->
+  <footer class="sticky-footer">
+    <div class="footer-left">
+      <button id="btnPrev" class="btn">이전차량</button>
+      <button id="btnNext" class="btn">다음차량</button>
+      <span class="toast" id="toast">준비됨</span>
+    </div>
+    <div class="footer-right">
+      <button id="btnSave" class="btn">임시저장</button>
+      <button id="btnSubmit" class="btn">제출(콘솔+미리보기)</button>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/**
+ * =========================
+ * 1) 샘플 템플릿(서버에서 내려올 형태 예시)
+ * =========================
+ * - 실제 환경에서는 fetch('/api/formation?trainNo=...&date=...') 등으로 받아오면 됨.
+ */
+function buildSampleTemplate(trainNo) {
+  // 편성 판정(샘플): 편성번호 끝자리로 2/8/10 가정
+  const last = (trainNo || "0").replace(/\D/g,"").slice(-1);
+  const formationCount = (last === "0") ? 10 : (last === "8" ? 8 : 2);
+
+  // 차량별로 부위/항목이 다르다는 조건 반영
+  // 예: 1호차는 TC1(600,200), TC2(600,200,BB) / 2호차는 다른 명칭 등
+  const cars = Array.from({length: formationCount}, (_, i) => {
+    const carNo = i + 1;
+
+    // 차량별 변형 규칙(샘플)
+    let parts;
+    if (carNo === 1) {
+      parts = [
+        { partCode: "TC1", partName: "TC1", items: [
+          { key: "600", label: "600MΩ", unit: "MΩ", type: "number" },
+          { key: "200", label: "200MΩ", unit: "MΩ", type: "number" },
+        ]},
+        { partCode: "TC2", partName: "TC2", items: [
+          { key: "600", label: "600MΩ", unit: "MΩ", type: "number" },
+          { key: "200", label: "200MΩ", unit: "MΩ", type: "number" },
+          { key: "BB",  label: "BB",     unit: "MΩ", type: "number" },
+        ]},
+      ];
+    } else if (carNo === 2) {
+      parts = [
+        { partCode: "TC1", partName: "TC1", items: [
+          { key: "600", label: "600MΩ", unit: "MΩ", type: "number" },
+          { key: "100", label: "100MΩ", unit: "MΩ", type: "number" },
+        ]},
+        { partCode: "MG", partName: "MG(주전동기)", items: [
+          { key: "R", label: "R", unit: "MΩ", type: "number" },
+          { key: "S", label: "S", unit: "MΩ", type: "number" },
+          { key: "T", label: "T", unit: "MΩ", type: "number" },
+        ]},
+      ];
+    } else {
+      // 나머지는 간단 샘플
+      parts = [
+        { partCode: "TC", partName: "TC", items: [
+          { key: "600", label: "600MΩ", unit: "MΩ", type: "number" },
+          { key: "200", label: "200MΩ", unit: "MΩ", type: "number" },
+        ]},
+      ];
+    }
+
+    return {
+      carNo,
+      carLabel: `${carNo}호차`,
+      parts
+    };
+  });
+
+  return {
+    trainNo,
+    formationCount,
+    cars
+  };
+}
+
+/**
+ * =========================
+ * 2) 상태(state) 관리
+ * =========================
+ */
+const state = {
+  header: {
+    tripDate: "",
+    trainNo: ""
+  },
+  template: null,       // buildSampleTemplate 결과
+  activeCarIndex: 0,    // 선택된 차량 index
+  values: {}            // 입력값 저장: values[carNo][partCode][itemKey] = value
+};
+
+const els = {
+  tripDate: document.getElementById("tripDate"),
+  trainNo: document.getElementById("trainNo"),
+  btnLoad: document.getElementById("btnLoad"),
+  carTabs: document.getElementById("carTabs"),
+  carTitle: document.getElementById("carTitle"),
+  carMeta: document.getElementById("carMeta"),
+  carBody: document.getElementById("carBody"),
+  formationText: document.getElementById("formationText"),
+  formationDot: document.getElementById("formationDot"),
+  progressText: document.getElementById("progressText"),
+  progressDot: document.getElementById("progressDot"),
+  jsonPreview: document.getElementById("jsonPreview"),
+  btnPrev: document.getElementById("btnPrev"),
+  btnNext: document.getElementById("btnNext"),
+  btnSave: document.getElementById("btnSave"),
+  btnSubmit: document.getElementById("btnSubmit"),
+  toast: document.getElementById("toast"),
+};
+
+function toast(msg) {
+  els.toast.textContent = msg;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => (els.toast.textContent = "준비됨"), 1800);
+}
+
+/**
+ * =========================
+ * 3) 렌더링
+ * =========================
+ */
+function ensurePath(obj, keys) {
+  let cur = obj;
+  for (const k of keys) {
+    if (!cur[k]) cur[k] = {};
+    cur = cur[k];
+  }
+  return cur;
+}
+
+function getInputValue(carNo, partCode, itemKey) {
+  return state.values?.[carNo]?.[partCode]?.[itemKey] ?? "";
+}
+
+function setInputValue(carNo, partCode, itemKey, value) {
+  ensurePath(state.values, [carNo, partCode])[itemKey] = value;
+}
+
+function calcCompletionForCar(car) {
+  // 해당 차량 항목 중 입력된 비율 계산
+  let total = 0, filled = 0;
+  for (const part of car.parts) {
+    for (const item of part.items) {
+      total++;
+      const v = getInputValue(car.carNo, part.partCode, item.key);
+      if (String(v).trim() !== "") filled++;
+    }
+  }
+  const ratio = total === 0 ? 0 : Math.round((filled / total) * 100);
+  const status = (filled === 0) ? "none" : (filled === total ? "done" : "partial");
+  return { total, filled, ratio, status };
+}
+
+function calcOverallProgress() {
+  if (!state.template) return { ratio: 0 };
+  let total = 0, filled = 0;
+  for (const car of state.template.cars) {
+    const c = calcCompletionForCar(car);
+    total += c.total;
+    filled += c.filled;
+  }
+  const ratio = total === 0 ? 0 : Math.round((filled / total) * 100);
+  return { ratio, total, filled };
+}
+
+function renderHeaderBadges() {
+  if (!state.template) {
+    els.formationText.textContent = "편성: -";
+    els.formationDot.className = "dot bad";
+    els.progressText.textContent = "진행률: 0%";
+    els.progressDot.className = "dot warn";
+    return;
+  }
+  els.formationText.textContent = `편성: ${state.template.formationCount}대`;
+  els.formationDot.className = "dot good";
+
+  const prog = calcOverallProgress();
+  els.progressText.textContent = `진행률: ${prog.ratio}% (${prog.filled}/${prog.total})`;
+  els.progressDot.className = "dot " + (prog.ratio === 100 ? "good" : (prog.ratio === 0 ? "bad" : "warn"));
+}
+
+function renderTabs() {
+  els.carTabs.innerHTML = "";
+  if (!state.template) return;
+
+  state.template.cars.forEach((car, idx) => {
+    const comp = calcCompletionForCar(car);
+
+    const tab = document.createElement("div");
+    tab.className = "tab";
+    if (idx === state.activeCarIndex) tab.classList.add("active");
+    if (comp.status === "done") tab.classList.add("done");
+    if (comp.status === "partial") tab.classList.add("partial");
+
+    tab.dataset.index = idx;
+
+    const mini = document.createElement("span");
+    mini.className = "mini";
+
+    const text = document.createElement("div");
+    text.innerHTML = `<b>${car.carLabel}</b> <small>${comp.ratio}%</small>`;
+
+    tab.appendChild(mini);
+    tab.appendChild(text);
+
+    tab.addEventListener("click", () => {
+      state.activeCarIndex = idx;
+      renderAll();
+      // 첫 입력칸으로 포커스
+      setTimeout(() => {
+        const first = els.carBody.querySelector("input[data-role='measure']");
+        if (first) first.focus();
+      }, 0);
+    });
+
+    els.carTabs.appendChild(tab);
+  });
+}
+
+function renderCarPanel() {
+  const tpl = state.template;
+  if (!tpl) {
+    els.carTitle.textContent = "편성을 불러오면 차량 입력 화면이 나타납니다.";
+    els.carMeta.textContent = "";
+    els.carBody.innerHTML = "";
+    return;
+  }
+
+  const car = tpl.cars[state.activeCarIndex];
+  const comp = calcCompletionForCar(car);
+
+  els.carTitle.textContent = `${car.carLabel} 입력`;
+  els.carMeta.innerHTML = `
+    <span class="badge"><span class="dot ${comp.status === "done" ? "good" : (comp.status === "none" ? "bad" : "warn")}"></span>
+    <span>${comp.filled}/${comp.total} 완료 (${comp.ratio}%)</span></span>
+  `;
+
+  els.carBody.innerHTML = "";
+  const grid = document.createElement("div");
+  grid.className = "grid";
+
+  car.parts.forEach(part => {
+    const partCard = document.createElement("div");
+    partCard.className = "measure";
+
+    const head = document.createElement("div");
+    head.className = "measure-head";
+    head.innerHTML = `<h2 style="font-size:15px;margin:0">${part.partName}</h2>
+      <div class="measure-meta">${part.items.length} 항목</div>`;
+    partCard.appendChild(head);
+
+    const rows = document.createElement("div");
+    rows.className = "rows";
+
+    part.items.forEach((item, itemIdx) => {
+      const row = document.createElement("div");
+      row.className = "input-row";
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.innerHTML = `<b>${item.label}</b><span>${item.type === "number" ? "숫자 입력" : "입력"}</span>`;
+
+      const unitWrap = document.createElement("div");
+      unitWrap.className = "unit-wrap";
+
+      const input = document.createElement("input");
+      input.className = "num";
+      input.type = (item.type === "number") ? "number" : "text";
+      input.inputMode = "decimal";
+      input.placeholder = "값 입력";
+      input.value = getInputValue(car.carNo, part.partCode, item.key);
+      input.dataset.role = "measure";
+      input.dataset.carNo = car.carNo;
+      input.dataset.partCode = part.partCode;
+      input.dataset.itemKey = item.key;
+
+      // 입력 이벤트: state에 저장 + 탭/진행률 갱신 + JSON 미리보기 갱신
+      input.addEventListener("input", (e) => {
+        const v = e.target.value;
+        setInputValue(car.carNo, part.partCode, item.key, v);
+        renderHeaderBadges();
+        renderTabs();
+        renderJsonPreview();
+      });
+
+      // Enter(또는 모바일 next) 누르면 다음 입력으로 이동
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          focusNextMeasureInput(input);
+        }
+      });
+
+      const unit = document.createElement("div");
+      unit.className = "unit";
+      unit.textContent = item.unit || "";
+
+      unitWrap.appendChild(input);
+      unitWrap.appendChild(unit);
+
+      row.appendChild(label);
+      row.appendChild(unitWrap);
+      rows.appendChild(row);
+    });
+
+    partCard.appendChild(rows);
+    grid.appendChild(partCard);
+  });
+
+  els.carBody.appendChild(grid);
+}
+
+function focusNextMeasureInput(currentInput) {
+  const inputs = Array.from(els.carBody.querySelectorAll("input[data-role='measure']"));
+  const idx = inputs.indexOf(currentInput);
+  if (idx >= 0 && idx < inputs.length - 1) {
+    inputs[idx + 1].focus();
+  } else {
+    toast("이 차량의 마지막 항목입니다. 다음차량으로 이동하세요.");
+  }
+}
+
+function renderJsonPreview() {
+  const payload = buildSubmitPayload();
+  els.jsonPreview.textContent = JSON.stringify(payload, null, 2);
+}
+
+function renderAll() {
+  renderHeaderBadges();
+  renderTabs();
+  renderCarPanel();
+  renderJsonPreview();
+}
+
+/**
+ * =========================
+ * 4) 제출/저장 Payload 구성
+ * =========================
+ */
+function buildSubmitPayload() {
+  // 서버 저장용으로 묶는 형태 예시
+  const tpl = state.template;
+  return {
+    tripDate: state.header.tripDate,
+    trainNo: state.header.trainNo,
+    formationCount: tpl?.formationCount ?? null,
+    cars: (tpl?.cars ?? []).map(car => ({
+      carNo: car.carNo,
+      carLabel: car.carLabel,
+      parts: car.parts.map(part => ({
+        partCode: part.partCode,
+        partName: part.partName,
+        items: part.items.map(item => ({
+          key: item.key,
+          label: item.label,
+          unit: item.unit,
+          value: getInputValue(car.carNo, part.partCode, item.key)
+        }))
+      }))
+    }))
+  };
+}
+
+/**
+ * =========================
+ * 5) 로컬 임시저장/복원
+ * =========================
+ */
+const LS_KEY = "insulation_measure_draft_v1";
+
+function saveDraft() {
+  const draft = {
+    state,
+    savedAt: new Date().toISOString()
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(draft));
+  toast("임시저장 완료");
+}
+
+function loadDraftIfAny() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+
+    // 최소 필드만 복원(안전)
+    if (draft?.state?.header) state.header = draft.state.header;
+    if (draft?.state?.values) state.values = draft.state.values;
+    if (draft?.state?.template) state.template = draft.state.template;
+    if (typeof draft?.state?.activeCarIndex === "number") state.activeCarIndex = draft.state.activeCarIndex;
+
+    // UI 반영
+    els.tripDate.value = state.header.tripDate || "";
+    els.trainNo.value = state.header.trainNo || "";
+    toast("임시저장 데이터 복원");
+    renderAll();
+  } catch (e) {
+    console.warn("Draft load failed", e);
+  }
+}
+
+/**
+ * =========================
+ * 6) 이벤트 바인딩
+ * =========================
+ */
+els.btnLoad.addEventListener("click", () => {
+  const tripDate = els.tripDate.value;
+  const trainNo = els.trainNo.value.trim();
+
+  if (!tripDate || !trainNo) {
+    toast("출장일과 편성번호를 입력하세요.");
+    return;
+  }
+
+  // 실제: fetch로 템플릿 받아오기
+  // const tpl = await fetch(...).then(r=>r.json());
+
+  const tpl = buildSampleTemplate(trainNo);
+
+  state.header.tripDate = tripDate;
+  state.header.trainNo = trainNo;
+  state.template = tpl;
+
+  // 차량 1부터 표시
+  state.activeCarIndex = 0;
+
+  // 차량별 values 초기화는 필요 시만(기존 입력 유지하고 싶으면 유지)
+  // 여기서는 편성 변경 시 초기화:
+  state.values = {};
+
+  toast(`${tpl.formationCount}대 편성 로드 완료`);
+  renderAll();
+
+  setTimeout(() => {
+    const first = els.carBody.querySelector("input[data-role='measure']");
+    if (first) first.focus();
+  }, 0);
+});
+
+els.btnPrev.addEventListener("click", () => {
+  if (!state.template) return;
+  state.activeCarIndex = Math.max(0, state.activeCarIndex - 1);
+  renderAll();
+});
+
+els.btnNext.addEventListener("click", () => {
+  if (!state.template) return;
+  state.activeCarIndex = Math.min(state.template.cars.length - 1, state.activeCarIndex + 1);
+  renderAll();
+});
+
+els.btnSave.addEventListener("click", () => {
+  if (!state.template) {
+    toast("먼저 편성을 불러오세요.");
+    return;
+  }
+  saveDraft();
+});
+
+els.btnSubmit.addEventListener("click", () => {
+  if (!state.template) {
+    toast("먼저 편성을 불러오세요.");
+    return;
+  }
+  const payload = buildSubmitPayload();
+  console.log("SUBMIT PAYLOAD:", payload);
+  renderJsonPreview();
+  toast("제출 데이터가 콘솔과 미리보기에 출력되었습니다.");
+});
+
+// 입력값 변경 시 헤더 state 반영
+els.tripDate.addEventListener("change", () => {
+  state.header.tripDate = els.tripDate.value;
+  renderJsonPreview();
+});
+els.trainNo.addEventListener("input", () => {
+  state.header.trainNo = els.trainNo.value.trim();
+  renderJsonPreview();
+});
+
+// 초기값(오늘 날짜 자동)
+(function init() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,"0");
+  const dd = String(today.getDate()).padStart(2,"0");
+  els.tripDate.value = `${yyyy}-${mm}-${dd}`;
+  state.header.tripDate = els.tripDate.value;
+
+  loadDraftIfAny();
+  renderAll();
+})();
+</script>
+</body>
+</html>
