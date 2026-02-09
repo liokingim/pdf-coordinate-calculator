@@ -8,7 +8,22 @@
     html, body { margin:0; height:100%; background:#fff; font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif; }
     #wrap { display:grid; grid-template-columns: 360px 1fr; height:100%; }
     #panel { padding:14px; border-right:1px solid #eee; overflow:auto; }
+    .chart-area { position:relative; width:100%; height:100%; }
     #canvas { width:100%; height:100%; display:block; }
+    #labelLayer { position:absolute; inset:0; pointer-events:none; }
+    .slice-label {
+      position:absolute;
+      transform: translate(-50%, -50%);
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #222;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(0,0,0,0.15);
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
     textarea { width:100%; height:220px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; }
     .row { display:flex; gap:8px; align-items:center; margin:10px 0; }
     label { font-size:13px; color:#444; }
@@ -72,11 +87,22 @@
       <div class="legend" id="legend"></div>
     </div>
 
-    <canvas id="canvas"></canvas>
+    <div class="chart-area">
+      <canvas id="canvas"></canvas>
+      <div id="labelLayer"></div>
+    </div>
   </div>
 
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
   <script type="module">
-    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+    import * as THREE from "three";
     import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
 
     // ---- (1) 정렬된 wordCounts -> pie items ----
@@ -128,6 +154,7 @@
 
     // ---- Three.js scene ----
     const canvas = document.getElementById("canvas");
+    const labelLayer = document.getElementById("labelLayer");
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(2, devicePixelRatio));
     renderer.shadowMap.enabled = true;
@@ -164,6 +191,7 @@
     scene.add(ground);
 
     let pieGroup = new THREE.Group();
+    let sliceLabels = [];
     scene.add(pieGroup);
 
     function clearPie() {
@@ -174,6 +202,8 @@
       });
       pieGroup = new THREE.Group();
       scene.add(pieGroup);
+      sliceLabels.forEach(x => x.el.remove());
+      sliceLabels = [];
     }
 
     function renderLegend(items) {
@@ -231,8 +261,47 @@
         mesh.position.y = Math.sin(mid) * push;
 
         pieGroup.add(mesh);
+
+        const pct = (it.ratio * 100).toFixed(1);
+        const el = document.createElement("div");
+        el.className = "slice-label";
+        el.textContent = `${it.label} ${pct}%`;
+        labelLayer.appendChild(el);
+
+        sliceLabels.push({
+          el,
+          local: new THREE.Vector3(
+            Math.cos(mid) * (radius * 0.68) + mesh.position.x,
+            Math.sin(mid) * (radius * 0.68) + mesh.position.y,
+            depth * 0.75 + 14
+          )
+        });
         angle += sliceAngle;
       });
+    }
+
+    const _labelWorld = new THREE.Vector3();
+    function updateSliceLabels() {
+      if (!sliceLabels.length) return;
+      pieGroup.updateMatrixWorld(true);
+
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+
+      for (const item of sliceLabels) {
+        _labelWorld.copy(item.local).applyMatrix4(pieGroup.matrixWorld);
+        _labelWorld.project(camera);
+
+        const visible = _labelWorld.z > -1 && _labelWorld.z < 1;
+        if (!visible) {
+          item.el.style.display = "none";
+          continue;
+        }
+
+        item.el.style.display = "block";
+        item.el.style.left = `${(_labelWorld.x * 0.5 + 0.5) * w}px`;
+        item.el.style.top = `${(-_labelWorld.y * 0.5 + 0.5) * h}px`;
+      }
     }
 
     function resize() {
@@ -246,6 +315,7 @@
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
+      updateSliceLabels();
       renderer.render(scene, camera);
     }
     resize();
