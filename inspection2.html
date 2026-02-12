@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>차량 절연측정기록표 (태블릿 입력)</title>
+  <style>
+
+  </style>
+</head>
+
+
+<body>
+<select id="trainCount">
+  <option value="">선택</option>
+  <option value="2">2</option>
+  <option value="8">8</option>
+  <option value="10">10</option>
+</select>
+
+<div id="btnArea" style="margin:12px 0;"></div>
+
+<hr />
+
+<!-- 하단 태그들 -->
+<div id="TC1">TC1</div>
+<div id="M1">M1</div>
+<div id="M3">M3</div>
+<div id="TC2">TC2</div>
+
+<script>
+  const data = {
+    "2": ["TC1", "TC2"],
+    "8": ["TC1", "M1", "M2", "T1", "T3", "M5", "M6", "TC2"],
+    "10": ["TC1", "M1", "M2", "T1", "M3", "T2", "T3", "M5", "M6", "TC2"]
+  };
+
+  const selectEl = document.getElementById("trainCount");
+  const btnArea = document.getElementById("btnArea");
+
+  // 하단 태그 컨테이너가 따로 없다면, "id가 있는 div들"을 대상으로 처리
+  // 필요하면 범위를 좁히기 위해 wrapper div를 만들고 그 안에서만 querySelectorAll 하세요.
+  const bottomDivs = Array.from(document.querySelectorAll("div[id]"))
+    .filter(el => el.id !== "btnArea"); // 버튼 영역 제외
+
+  function renderByKey(key) {
+    const arr = data[key] ?? [];
+
+    // 1) 버튼 생성
+    btnArea.innerHTML = "";
+    arr.forEach((v, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = `${idx + 1}. ${v}`;
+      btn.dataset.value = v;
+
+      btn.addEventListener("click", () => {
+        console.log("clicked:", v);
+        // 여기서 v 값으로 원하는 처리 가능
+      });
+
+      btnArea.appendChild(btn);
+      btnArea.appendChild(document.createTextNode(" "));
+    });
+
+    // 2) 하단 태그 표시/숨김
+    const set = new Set(arr);
+    bottomDivs.forEach(el => {
+      el.style.display = set.has(el.id) ? "" : "none";
+    });
+  }
+
+  selectEl.addEventListener("change", (e) => {
+    renderByKey(e.target.value);
+  });
+
+  // 초기값이 있으면 처음부터 반영
+  // renderByKey(selectEl.value);
+</script>
+</body>
+</html>
